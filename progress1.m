@@ -37,7 +37,7 @@ x = zeros(6,1000);
 y = zeros(5,1000);
 x(:,1) = perturbed_state;
 
-for k=2:200
+for k=2:1000
     x(:,k) = (eye(6) + t*A)*x(:,k-1);
     
     xi_g = x(1,k);
@@ -56,8 +56,19 @@ for k=2:200
     
 end
 
+%Plot and compare the two formulations
 
+figure()
+hold on;
+grid on;
+plot(t_ode,x_ode(:,1));
+plot(.1:.1:100,x(1,:));
 
+figure()
+hold on;
+grid on;
+plot(t_ode,x_ode(:,7));
+plot(.1:.1:100,y(1,:));
 
 
 

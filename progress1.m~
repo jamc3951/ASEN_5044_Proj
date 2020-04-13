@@ -33,15 +33,36 @@ A = [0 0 -2*sin(pi/2 + 4*tan(pi/18)*t) 0 0 0; 0 0 2*cos(pi/2 + 4*tan(pi/18)*t) 0
      0 0 0 0 0 0; 0 0 0 0 0 -12*sin(-pi/2 + pi/25*t); 0 0 0 0 0 12*cos(-pi/2 + pi/25*t); ...
      0 0 0 0 0 0];
 
-C = [(eta_a - eta_g
+x = zeros(6,1000);
+y = zeros(5,1000);
+x(:,1) = perturbed_state;
 
-for k=1:200
+for k=2:1000
+    x(:,k) = (eye(6) + t*A)*x(:,k-1);
+    
+    xi_g = x(1,k);
+    eta_g = x(2,k);
+    xi_a = x(4,k);
+    eta_a = x(5,k);
     
     
+    C = [(eta_a - eta_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), (-xi_a + xi_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), -1, (-eta_a + eta_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), (xi_a - xi_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), 0; ...
+    (xi_g - xi_a)/sqrt((eta_g - eta_a)^2 + (xi_g - xi_a)^2), (eta_g - eta_a)/sqrt((eta_g - eta_a)^2 + (xi_g - xi_a)^2), 0, -(xi_g - xi_a)/sqrt((eta_g - eta_a)^2 + (xi_g - xi_a)^2), -(eta_g - eta_a)/sqrt((eta_g - eta_a)^2 + (xi_g - xi_a)^2), 0; ...
+    (eta_a - eta_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), (-xi_a + xi_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), -1, (-eta_a + eta_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), (xi_a - xi_g)/(((eta_g - eta_a)^2 + (xi_g - xi_a)^2)), -1; ...
+    0 0 0 1 0 0; 0 0 0 0 1 0];
+    
+    y(:,k) = C*x(:,k);
     
     
 end
 
+%Plot and compare the two formulations
+
+figure()
+hold on;
+grid on;
+plot(t_ode,x_ode(:,1));
+plot(.1:.1:100,x(1,:));
 
 
 
