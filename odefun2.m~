@@ -26,10 +26,10 @@ dtheta_a = wa;
 
 %Measurements
 dy1 = atan((eta_a - eta_g)/(xi_a - xi_g))-theta_g;
-dy2 = sqrt((eta_g - eta_a)^2 + (xi_g - xi_a)^2);
-dy3 = atan((eta_g - eta_a)/(xi_g - xi_a))-theta_a;
-dy4 = xi_a;
-dy5 = eta_a;
+dy2 = sqrt((eta_g = eta_a)^2 + (xi_g - xi_a)^2);
+dy3 = atan((eta_g - eta_a)/(xi_g - xi_a))-theta_a
+dy4 =
+dy5 =
 
 ddt = [dxi_g;deta_g;dtheta_g;dxi_a;deta_a;dtheta_a;dy1;dy2;dy3;dy4;dy5];
 
