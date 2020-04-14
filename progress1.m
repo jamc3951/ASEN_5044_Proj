@@ -78,19 +78,108 @@ y = meas(nom_cond(time(2:end))')+dy';
 %Plot and compare the two formulations
 
 figure()
+subplot(3,1,1)
 hold on;
 grid on;
-plot(t_ode,x_ode(:,[1,2,4,5]));
-plot(time,x([1,2,4,5],:));
+plot(t_ode,x_ode(:,1),'.');
+plot(time,x(1,:));
+xlabel('Time [s]');
+ylabel('\xi_g');
+legend('ode45', 'Linearized')
+
+subplot(3,1,2)
+hold on;
+grid on;
+plot(t_ode,x_ode(:,2),'.');
+plot(time,x(2,:));
+xlabel('Time [s]');
+ylabel('\eta_g');
+
+
+subplot(3,1,3)
+hold on;
+grid on;
+plot(t_ode,x_ode(:,3),'.');
+plot(time,x(3,:));
+xlabel('Time [s]');
+ylabel('\theta_g');
+
+suptitle('Linearized vs. Nonlinear UGV States')
+
 
 figure()
+subplot(3,1,1)
 hold on;
 grid on;
-plot(t_ode(2:end),measurements(:,:));
-plot(time(2:end),y(:,:));
+plot(t_ode,x_ode(:,4),'.');
+plot(time,x(4,:));
+xlabel('Time [s]');
+ylabel('\xi_A');
+legend('ode45', 'Linearized')
+
+subplot(3,1,2)
+hold on;
+grid on;
+plot(t_ode,x_ode(:,5),'.');
+plot(time,x(5,:));
+xlabel('Time [s]');
+ylabel('\eta_A');
 
 
+subplot(3,1,3)
+hold on;
+grid on;
+plot(t_ode,x_ode(:,6),'.');
+plot(time,x(6,:));
+xlabel('Time [s]');
+ylabel('\theta_A');
 
+suptitle('Linearized vs. Nonlinear UAV States')
+
+
+figure()
+subplot(5,1,1)
+hold on;
+grid on;
+plot(t_ode(2:end),measurements(:,1),'.');
+plot(time(2:end),y(:,1));
+xlabel('Time [s]');
+ylabel('y_1');
+legend('ode45', 'Linearized')
+
+subplot(5,1,2)
+hold on;
+grid on;
+plot(t_ode(2:end),measurements(:,2),'.');
+plot(time(2:end),y(:,2));
+xlabel('Time [s]');
+ylabel('y_2');
+
+subplot(5,1,3)
+hold on;
+grid on;
+plot(t_ode(2:end),measurements(:,3),'.');
+plot(time(2:end),y(:,3));
+xlabel('Time [s]');
+ylabel('y_3');
+
+subplot(5,1,4)
+hold on;
+grid on;
+plot(t_ode(2:end),measurements(:,4),'.');
+plot(time(2:end),y(:,4));
+xlabel('Time [s]');
+ylabel('\xi_A ');
+
+subplot(5,1,5)
+hold on;
+grid on;
+plot(t_ode(2:end),measurements(:,5),'.');
+plot(time(2:end),y(:,5));
+xlabel('Time [s]');
+ylabel('\eta_A ');
+
+suptitle('Linearized vs. Nonlinear Measurements')
 
 
 
