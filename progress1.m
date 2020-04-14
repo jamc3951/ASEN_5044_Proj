@@ -15,14 +15,13 @@ wa = pi/25; %rad/s
 n=6;
 p=5;
 
-xi_g_nom =@(t) (1/(2*tan(pi/18)))*(20*tan(pi/18) + 1 - cos(4*tan(-pi/18)*t)); 
-eta_g_nom =@(t) (1/(2*tan(pi/18)))*sin(4*tan(pi/18)*t);
+xi_g_nom =@(t) (1/(2*tan(pi/18)))*(20*tan(pi/18) + 1 - cos(4*tan(phi_g)*t)); 
+eta_g_nom =@(t) (1/(2*tan(pi/18)))*sin(4*tan(-phi_g)*t);
 theta_g_nom =@(t) pi/2 + 4*tan(phi_g)*t;
 xi_a_nom =@(t) (1/pi)*(300 - 60*pi - 300*cos(pi/25*t));
 eta_a_nom =@(t) -(300/pi)*sin(pi/25*t);
 theta_a_nom =@(t) -pi/2 + pi/25*t;
 nom_cond =@(t) [xi_g_nom(t); eta_g_nom(t); theta_g_nom(t); xi_a_nom(t); eta_a_nom(t); theta_a_nom(t)];
-
 perturbation = [0.15,0.15,0.05,0.15,0.15,0.05]; 
 inishcondish = [10,0,pi/2,-60,0,-pi/2];
 perturbed_state = inishcondish + perturbation;
