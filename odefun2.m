@@ -1,7 +1,7 @@
 % Jamison McGinley, Jarrod Puseman
 % 4/10/20
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function ddt = odefun2(t,IC)
+function ddt = odefun2(~,IC)
 %xi_g = IC(1);
 %eta_g = IC(2);
 theta_g = IC(3);
@@ -25,5 +25,4 @@ deta_a = va*sin(theta_a);
 dtheta_a = wa;
 
 ddt = [dxi_g;deta_g;dtheta_g;dxi_a;deta_a;dtheta_a];
-
 end
