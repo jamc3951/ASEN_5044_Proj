@@ -120,7 +120,6 @@ ylabel('\theta_g [rad]','Fontsize',14);
 
 suptitle('Linearized vs. Nonlinear UGV States')
 set(gcf, 'Position', [100, 100, 1100, 730])
-print('UGV','-dpng')
 
 % UAV States
 figure()
@@ -139,7 +138,7 @@ grid on;
 plot(t_ode,x_ode(:,5),'.','Markersize',20);
 plot(time,x(5,:),'linewidth',2);
 %xlabel('Time [s]');
-ylabel('\eta_A [m]','Fontsize',14);
+ylabel('\eta_A','Fontsize',14);
 
 
 subplot(3,1,3)
@@ -148,12 +147,9 @@ grid on;
 plot(t_ode,x_ode(:,6),'.','Markersize',20);
 plot(time,x(6,:),'linewidth',2);
 xlabel('Time [s]','Fontsize',14);
-ylabel('\theta_A [rad]','Fontsize',14);
+ylabel('\theta_A','Fontsize',14);
 
 suptitle('Linearized vs. Nonlinear UAV States')
-set(gcf, 'Position', [100, 100, 1100, 730])
-print('UAV','-dpng')
-
 
 %Measurements
 figure()
@@ -162,8 +158,8 @@ hold on;
 grid on;
 plot(t_ode(2:end),measurements(:,1),'.','Markersize',20);
 plot(time(2:end),y(:,1),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('y_1 [rad]');
+xlabel('Time [s]');
+ylabel('y_1');
 legend('ode45', 'Linearized')
 
 subplot(5,1,2)
@@ -171,24 +167,24 @@ hold on;
 grid on;
 plot(t_ode(2:end),measurements(:,2),'.','Markersize',20);
 plot(time(2:end),y(:,2),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('y_2 [m]');
+xlabel('Time [s]');
+ylabel('y_2');
 
 subplot(5,1,3)
 hold on;
 grid on;
 plot(t_ode(2:end),measurements(:,3),'.','Markersize',20);
 plot(time(2:end),y(:,3),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('y_3 [rad]');
+xlabel('Time [s]');
+ylabel('y_3');
 
 subplot(5,1,4)
 hold on;
 grid on;
 plot(t_ode(2:end),measurements(:,4),'.','Markersize',20);
 plot(time(2:end),y(:,4),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\xi_A [m]');
+xlabel('Time [s]');
+ylabel('\xi_A ');
 
 subplot(5,1,5)
 hold on;
@@ -196,8 +192,6 @@ grid on;
 plot(t_ode(2:end),measurements(:,5),'.','Markersize',20);
 plot(time(2:end),y(:,5),'linewidth',2);
 xlabel('Time [s]');
-ylabel('\eta_A [m]');
+ylabel('\eta_A ');
 
 suptitle('Linearized vs. Nonlinear Measurements')
-set(gcf, 'Position', [100, 100, 1100, 730])
-print('measurements','-dpng')
