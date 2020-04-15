@@ -1,6 +1,12 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ASEN 5044: Statistical Estimation of Dynamic Systems
+% Final Project
 % Jamison McGinley, Jarrod Puseman
-% 4/14/20
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dr. Matsuo
+% 5/1/2020
+% Created:  4/10/2020
+% Modified: 4/14/2020
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Setup
 clear; close all; clc;
@@ -22,7 +28,7 @@ xi_a_nom =@(t) (1/pi)*(300 - 60*pi - 300*cos(pi/25*t));
 eta_a_nom =@(t) -(300/pi)*sin(pi/25*t);
 theta_a_nom =@(t) wrapToPi(-pi/2 + pi/25*t);
 nom_cond =@(t) [xi_g_nom(t); eta_g_nom(t); theta_g_nom(t); xi_a_nom(t); eta_a_nom(t); theta_a_nom(t)];
-perturbation = [0.15,0.15,0.05,0.15,0.15,0.05]; 
+perturbation = [0.15;0.15;0.05;0.15;0.15;0.05]; 
 %perturbation = [0;1;0; 0;0;0.1]; %Used to compare to TA solution
 inishcondish = [10;0;pi/2;-60;0;-pi/2];
 perturbed_state = inishcondish + perturbation;
@@ -80,112 +86,18 @@ y = meas(xNom(:,2:end))+dy;
 
 %% Plot and compare the two formulations
 % UGV States
-figure()
-subplot(3,1,1)
-hold on;
-grid on;
-plot(t_ode,x_ode(:,1),'.','Markersize',20);
-plot(time,x(1,:),'linewidth',2);
-%xlabel('Time [s]','Fontsize',14);
-ylabel('\xi_g [m]','Fontsize',14);
-legend('ode45', 'Linearized')
+ugvstates = {'\xi_g [m]','\eta_g [m]','\theta_g [rad]'};
+uavstates = {'\xi_a [m]','\eta_a [m]','\theta_a [rad]'};
+measurement_labels = {'\gamma_{ag} [rad]','\rho_{ga} [m]','\gamma_{ga} [rad]','\xi_a [m]','\eta_a [m]'};
 
-subplot(3,1,2)
-hold on;
-grid on;
-plot(t_ode,x_ode(:,2),'.','Markersize',20);
-plot(time,x(2,:),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\eta_g [m]','Fontsize',14);
-
-subplot(3,1,3)
-hold on;
-grid on;
-plot(t_ode,x_ode(:,3),'.','Markersize',20);
-plot(time,x(3,:),'linewidth',2);
-xlabel('Time [s]','Fontsize',14);
-ylabel('\theta_g [rad]','Fontsize',14);
-
-suptitle('Linearized vs. Nonlinear UGV States')
-set(gcf, 'Position', [100, 100, 1100, 730])
+plotcompare(t_ode,x_ode(:,1:3)',time,x(1:3,:),ugvstates,'Linearized vs. Nonlinear UGV States');
 print('UGV','-dpng')
 
-% UAV States
-figure()
-subplot(3,1,1)
-hold on;
-grid on;
-plot(t_ode,x_ode(:,4),'.','Markersize',20);
-plot(time,x(4,:),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\xi_A [m]','Fontsize',14);
-legend('ode45', 'Linearized')
-
-subplot(3,1,2)
-hold on;
-grid on;
-plot(t_ode,x_ode(:,5),'.','Markersize',20);
-plot(time,x(5,:),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\eta_A [m]','Fontsize',14);
-
-
-subplot(3,1,3)
-hold on;
-grid on;
-plot(t_ode,x_ode(:,6),'.','Markersize',20);
-plot(time,x(6,:),'linewidth',2);
-xlabel('Time [s]','Fontsize',14);
-ylabel('\theta_A [rad]','Fontsize',14);
-
-suptitle('Linearized vs. Nonlinear UAV States')
-set(gcf, 'Position', [100, 100, 1100, 730])
+plotcompare(t_ode,x_ode(:,4:6)',time,x(4:6,:),uavstates,'Linearized vs. Nonlinear UAV States');
 print('UAV','-dpng')
 
-
-%Measurements
-figure()
-subplot(5,1,1)
-hold on;
-grid on;
-plot(t_ode(2:end),measurements(1,:),'.','Markersize',20);
-plot(time(2:end),y(1,:),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\gamma_{ag} [rad]');
-legend('ode45', 'Linearized')
-
-subplot(5,1,2)
-hold on;
-grid on;
-plot(t_ode(2:end),measurements(2,:),'.','Markersize',20);
-plot(time(2:end),y(2,:),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\rho_{ga} [m]');
-
-subplot(5,1,3)
-hold on;
-grid on;
-plot(t_ode(2:end),measurements(3,:),'.','Markersize',20);
-plot(time(2:end),y(3,:),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\gamma_{ga} [rad]');
-
-subplot(5,1,4)
-hold on;
-grid on;
-plot(t_ode(2:end),measurements(4,:),'.','Markersize',20);
-plot(time(2:end),y(4,:),'linewidth',2);
-%xlabel('Time [s]');
-ylabel('\xi_A [m]');
-
-subplot(5,1,5)
-hold on;
-grid on;
-plot(t_ode(2:end),measurements(5,:),'.','Markersize',20);
-plot(time(2:end),y(5,:),'linewidth',2);
-xlabel('Time [s]');
-ylabel('\eta_A [m]');
-
-suptitle('Linearized vs. Nonlinear Measurements')
-set(gcf, 'Position', [100, 100, 1100, 730])
+plotcompare(t_ode(2:end),measurements,time(2:end),y,measurement_labels,'Linearized vs. Nonlinear Measurements');
 print('measurements','-dpng')
+
+%% Implement Filters and Test Them
+

@@ -1,6 +1,12 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ASEN 5044: Statistical Estimation of Dynamic Systems
+% Final Project
 % Jamison McGinley, Jarrod Puseman
-% 4/10/20
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dr. Matsuo
+% 5/1/2020
+% Created:  4/10/2020
+% Modified: 4/12/2020
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function ddt = odefun2(~,IC)
 %xi_g = IC(1);
 %eta_g = IC(2);
@@ -16,7 +22,6 @@ va = 12; %m/s
 wa = pi/25; %rad/s
 
 %Changes in states
-
 dxi_g = vg*cos(theta_g);
 deta_g = vg*sin(theta_g);
 dtheta_g = (vg/L)*tan(phi_g);
