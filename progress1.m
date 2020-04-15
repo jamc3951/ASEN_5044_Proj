@@ -17,28 +17,30 @@ p=5;
 
 xi_g_nom =@(t) (1/(2*tan(pi/18)))*(20*tan(pi/18) + 1 - cos(4*tan(phi_g)*t)); 
 eta_g_nom =@(t) (1/(2*tan(pi/18)))*sin(4*tan(-phi_g)*t);
-theta_g_nom =@(t) pi/2 + 4*tan(phi_g)*t;
+theta_g_nom =@(t) wrapToPi(pi/2 + 4*tan(phi_g)*t);
 xi_a_nom =@(t) (1/pi)*(300 - 60*pi - 300*cos(pi/25*t));
 eta_a_nom =@(t) -(300/pi)*sin(pi/25*t);
-theta_a_nom =@(t) -pi/2 + pi/25*t;
+theta_a_nom =@(t) wrapToPi(-pi/2 + pi/25*t);
 nom_cond =@(t) [xi_g_nom(t); eta_g_nom(t); theta_g_nom(t); xi_a_nom(t); eta_a_nom(t); theta_a_nom(t)];
 perturbation = [0.15,0.15,0.05,0.15,0.15,0.05]; 
-inishcondish = [10,0,pi/2,-60,0,-pi/2];
+%perturbation = [0;1;0; 0;0;0.1]; %Used to compare to TA solution
+inishcondish = [10;0;pi/2;-60;0;-pi/2];
 perturbed_state = inishcondish + perturbation;
 
-meas =@(states) [atan2((states(:,5) - states(:,2)),(states(:,4) - states(:,1)))-states(:,3), ...
-sqrt((states(:,2) - states(:,5)).^2 + (states(:,1) - states(:,4)).^2), ...
-atan2((states(:,2) - states(:,5)),(states(:,1) - states(:,4)))-states(:,6), ...
-states(:,4), ...
-states(:,5)];
+meas =@(states) [wrapToPi(atan2((states(5,:) - states(2,:)),(states(4,:) - states(1,:)))-states(3,:)); ...
+sqrt((states(2,:) - states(5,:)).^2 + (states(1,:) - states(4,:)).^2); ...
+wrapToPi(atan2((states(2,:) - states(5,:)),(states(1,:) - states(4,:)))-states(6,:)); ...
+states(4,:); ...
+states(5,:)];
 
 %% Use ode45 To Predict State
 [t_ode, x_ode] = ode45('odefun2', [0 100], perturbed_state);
-measurements = meas(x_ode(2:end,:));
+measurements = meas(x_ode(2:end,:)');
+x_ode(:,[3 6]) = wrapToPi(x_ode(:,[3 6]));
 
 %% Simulate the Linearized System w/ same perturbation
-A =@(t) [0 0 -2*sin(theta_g_nom(t)) 0 0 0; 0 0 2*cos(theta_g_nom(t)) 0 0 0; ...
-     0 0 0 0 0 0; 0 0 0 0 0 -12*sin(theta_a_nom(t)); 0 0 0 0 0 12*cos(theta_a_nom(t)); ...
+A =@(x) [0 0 -2*sin(x(3)) 0 0 0; 0 0 2*cos(x(3)) 0 0 0; ...
+     0 0 0 0 0 0; 0 0 0 0 0 -12*sin(x(6)); 0 0 0 0 0 12*cos(x(6)); ...
      0 0 0 0 0 0];
  
 B =@(t) [cos(theta_g_nom(t)), 0, 0 ,0;...
@@ -48,9 +50,9 @@ B =@(t) [cos(theta_g_nom(t)), 0, 0 ,0;...
     0,0, sin(theta_a_nom(t)),0;...
     0,0,0,1];
 
-C =@(t) [(eta_a_nom(t) - eta_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), (-xi_a_nom(t) + xi_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), -1, (-eta_a_nom(t) + eta_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), (xi_a_nom(t) - xi_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), 0; ...
-    (xi_g_nom(t) - xi_a_nom(t))/sqrt((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2), (eta_g_nom(t) - eta_a_nom(t))/sqrt((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2), 0, -(xi_g_nom(t) - xi_a_nom(t))/sqrt((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2), -(eta_g_nom(t) - eta_a_nom(t))/sqrt((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2), 0; ...
-    (eta_a_nom(t) - eta_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), (-xi_a_nom(t) + xi_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), 0, (-eta_a_nom(t) + eta_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), (-xi_a_nom(t) + xi_g_nom(t))/(((eta_g_nom(t) - eta_a_nom(t))^2 + (xi_g_nom(t) - xi_a_nom(t))^2)), -1; ...
+C =@(x) [(x(5) - x(2))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), (-x(4) + x(1))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), -1, (-x(5) + x(2))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), (x(4) - x(1))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), 0; ...
+    (x(1) - x(4))/sqrt((x(2) - x(5))^2 + (x(1) - x(4))^2), (x(2) - x(5))/sqrt((x(2) - x(5))^2 + (x(1) - x(4))^2), 0, -(x(1) - x(4))/sqrt((x(2) - x(5))^2 + (x(1) - x(4))^2), -(x(2) - x(5))/sqrt((x(2) - x(5))^2 + (x(1) - x(4))^2), 0; ...
+    (x(5) - x(2))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), (-x(4) + x(1))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), 0, (-x(5) + x(2))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), (-x(1) + x(4))/(((x(2) - x(5))^2 + (x(1) - x(4))^2)), -1; ...
     0 0 0 1 0 0; 0 0 0 0 1 0];
 
 Gamma = eye(6);
@@ -63,17 +65,18 @@ du = [0;0;0;0];
 w = zeros(n,len-1); %No noise
 v = zeros(p,len-1); %No noise
 dx(:,1)= perturbation;
+xNom = nom_cond(time);
 
 for k=2:len-1
-    Fk = (eye(6) + dt*A(time(k-1)));
+    Fk = (eye(6) + dt*A(xNom(:,k-1)));
     Gk = dt*B(time(k-1));
     Omegak = dt*Gamma;
     
     dx(:,k) = Fk*dx(:,k-1) + Gk*du + Omegak*w(:,k);
-    dy(:,k) = C(time(k))*dx(:,k)+ v(:,k);
+    dy(:,k) = C(xNom(:,k))*dx(:,k)+ v(:,k);
 end
-x = nom_cond(time)+dx;
-y = meas(nom_cond(time(2:end))')+dy';
+x = xNom+dx;
+y = meas(xNom(:,2:end))+dy;
 
 %% Plot and compare the two formulations
 % UGV States
@@ -145,41 +148,41 @@ figure()
 subplot(5,1,1)
 hold on;
 grid on;
-plot(t_ode(2:end),measurements(:,1),'.','Markersize',20);
-plot(time(2:end),y(:,1),'linewidth',2);
+plot(t_ode(2:end),measurements(1,:),'.','Markersize',20);
+plot(time(2:end),y(1,:),'linewidth',2);
 %xlabel('Time [s]');
-ylabel('y_1 [rad]');
+ylabel('\gamma_{ag} [rad]');
 legend('ode45', 'Linearized')
 
 subplot(5,1,2)
 hold on;
 grid on;
-plot(t_ode(2:end),measurements(:,2),'.','Markersize',20);
-plot(time(2:end),y(:,2),'linewidth',2);
+plot(t_ode(2:end),measurements(2,:),'.','Markersize',20);
+plot(time(2:end),y(2,:),'linewidth',2);
 %xlabel('Time [s]');
-ylabel('y_2 [m]');
+ylabel('\rho_{ga} [m]');
 
 subplot(5,1,3)
 hold on;
 grid on;
-plot(t_ode(2:end),measurements(:,3),'.','Markersize',20);
-plot(time(2:end),y(:,3),'linewidth',2);
+plot(t_ode(2:end),measurements(3,:),'.','Markersize',20);
+plot(time(2:end),y(3,:),'linewidth',2);
 %xlabel('Time [s]');
-ylabel('y_3 [rad]');
+ylabel('\gamma_{ga} [rad]');
 
 subplot(5,1,4)
 hold on;
 grid on;
-plot(t_ode(2:end),measurements(:,4),'.','Markersize',20);
-plot(time(2:end),y(:,4),'linewidth',2);
+plot(t_ode(2:end),measurements(4,:),'.','Markersize',20);
+plot(time(2:end),y(4,:),'linewidth',2);
 %xlabel('Time [s]');
 ylabel('\xi_A [m]');
 
 subplot(5,1,5)
 hold on;
 grid on;
-plot(t_ode(2:end),measurements(:,5),'.','Markersize',20);
-plot(time(2:end),y(:,5),'linewidth',2);
+plot(t_ode(2:end),measurements(5,:),'.','Markersize',20);
+plot(time(2:end),y(5,:),'linewidth',2);
 xlabel('Time [s]');
 ylabel('\eta_A [m]');
 
