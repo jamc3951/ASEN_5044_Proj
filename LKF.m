@@ -12,7 +12,7 @@ function [dx,P,eps] = LKF(dx0,P0,time,Fk,Gk,du,Omegak,Q,R,Hk,dy)
 % Created:  4/16/2020
 % Modified: 4/16/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-n = length(x0);
+n = length(dx0);
 len = length(time);
 I = eye(n);
 
@@ -26,13 +26,13 @@ for i = 2:len;
     dxminus = F*dx(:,i-1) + Gk(:,:,i-1)*du(:,i-1);
     Pminus = F*P(:,:,i-1)*F' + Omegak*Q*Omegak';
        
-    H = Hk(:,:,i-1)';
+    H = Hk(:,:,i-1);
     K = Pminus*H'*(H*Pminus*H' + R)^-1;
     dx(:,i) = dxminus + K*(dy(:,i-1) - H*dxminus);
     P(:,:,i) = (I-K*H)*Pminus;
     
     Sk = H*Pminus*H' + R;
     eyk = dy(:,i-1)-H*dxminus;
-    eps(i-1) = eyk'*Sk\eyk;
+    eps(i-1) = eyk'*(Sk\eyk);
 end
 end

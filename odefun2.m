@@ -5,9 +5,9 @@
 % Dr. Matsuo
 % 5/1/2020
 % Created:  4/10/2020
-% Modified: 4/12/2020
+% Modified: 4/16/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function ddt = odefun2(~,IC)
+function ddt = odefun2(~,IC,vg,L,phi_g,va,wa,Q)
 %xi_g = IC(1);
 %eta_g = IC(2);
 theta_g = IC(3);
@@ -15,11 +15,7 @@ theta_g = IC(3);
 %eta_a = IC(5);
 theta_a = IC(6);
 
-vg = 2; %m/s
-L = 0.5; %m
-phi_g = -pi/18; %rad
-va = 12; %m/s
-wa = pi/25; %rad/s
+w = mvnrnd([0;0;0;0;0;0],Q)'; %Random noise
 
 %Changes in states
 dxi_g = vg*cos(theta_g);
@@ -29,5 +25,5 @@ dxi_a = va*cos(theta_a);
 deta_a = va*sin(theta_a);
 dtheta_a = wa;
 
-ddt = [dxi_g;deta_g;dtheta_g;dxi_a;deta_a;dtheta_a];
+ddt = [dxi_g;deta_g;dtheta_g;dxi_a;deta_a;dtheta_a]+w;
 end
