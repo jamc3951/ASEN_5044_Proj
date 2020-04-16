@@ -5,7 +5,7 @@
 % Dr. Matsuo
 % 5/1/2020
 % Created:  4/10/2020
-% Modified: 4/14/2020
+% Modified: 4/16/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Setup
@@ -20,6 +20,7 @@ wa = pi/25; %rad/s
 
 n=6;
 p=5;
+d=4;
 
 xi_g_nom =@(t) (1/(2*tan(pi/18)))*(20*tan(pi/18) + 1 - cos(4*tan(phi_g)*t)); 
 eta_g_nom =@(t) (1/(2*tan(pi/18)))*sin(4*tan(-phi_g)*t);
@@ -38,6 +39,13 @@ sqrt((states(2,:) - states(5,:)).^2 + (states(1,:) - states(4,:)).^2); ...
 wrapToPi(atan2((states(2,:) - states(5,:)),(states(1,:) - states(4,:)))-states(6,:)); ...
 states(4,:); ...
 states(5,:)];
+
+load('cooplocalization_finalproj_KFdata.mat');
+% measlabels
+% Qtrue
+% Rtrue
+% tvec
+% ydata
 
 %% Use ode45 To Predict State
 [t_ode, x_ode] = ode45('odefun2', [0 100], perturbed_state);
@@ -84,11 +92,10 @@ end
 x = xNom+dx;
 y = meas(xNom(:,2:end))+dy;
 
-%% Plot and compare the two formulations
+%% Plot and compare the two formulations to verify Dynamics
 % UGV States
 ugvstates = {'\xi_g [m]','\eta_g [m]','\theta_g [rad]'};
 uavstates = {'\xi_a [m]','\eta_a [m]','\theta_a [rad]'};
-measurement_labels = {'\gamma_{ag} [rad]','\rho_{ga} [m]','\gamma_{ga} [rad]','\xi_a [m]','\eta_a [m]'};
 
 plotcompare(t_ode,x_ode(:,1:3)',time,x(1:3,:),ugvstates,'Linearized vs. Nonlinear UGV States');
 print('UGV','-dpng')
@@ -96,8 +103,62 @@ print('UGV','-dpng')
 plotcompare(t_ode,x_ode(:,4:6)',time,x(4:6,:),uavstates,'Linearized vs. Nonlinear UAV States');
 print('UAV','-dpng')
 
-plotcompare(t_ode(2:end),measurements,time(2:end),y,measurement_labels,'Linearized vs. Nonlinear Measurements');
+plotcompare(t_ode(2:end),measurements,time(2:end),y,measLabels,'Linearized vs. Nonlinear Measurements');
 print('measurements','-dpng')
 
-%% Implement Filters and Test Them
+%% Linearized KF - Compute what we can offline
+FkLKF = zeros(n,n,len-1); % F(1) is F_0
+GkLKF = zeros(n,d,len-1); % G(1) is G_0
+OmegaLKF = dt*Gamma; %Constant for all time
+HkLKF = zeros(p,n,len-1); %H(1) is H_1
+dukLKF = zeros(d,len-1); % No force deviation from nominal
+
+%Fill in the Jacobians
+for i = 1:len-1
+    FkLKF(:,:,i) = (eye(6) + dt*A(xNom(:,i)));
+    GkLKF(:,:,i) = dt*B(time(i));
+    HkLKF(:,:,i) = C(xNom(:,i+1)); %Recall indexing different
+end
+
+% Monte Carlo
+% Make some structure to store all the trials of data
+
+%%% Do here %%%
+
+for i = 1:1
+    % Generate x0 %%%%%%%
+
+    % Generate some truth data %%%%%%%%%
+    
+    % Generate P0 %%%%%%%%%%%%%
+    
+    % Generate measurements %%%%%%%%%%%%%
+    
+    % Create dy %%%%%%%%%%%%%%
+    
+    [dx,P,NIS] = LKF(dx0,P0,time,FkLKF,GkLKF,dukLKF,OmegakLKF,Qtrue,Rtrue,HkLKF,dyLKF);
+    xLKF = xNom + dxLKF;
+    % Compute NEES
+    
+    % Store NEES and NIS
+    
+end
+% Make the plots requested (a single trial - use xLKF and P, NEES and NIS)
+
+
+
+%% Extended Kalman Filter
+% Repeat the above
+
+
+
+
+
+
+
+
+
+%% Implement Filters on the Provided Data
+% Hopefully easy
+
 
