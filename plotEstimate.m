@@ -1,8 +1,8 @@
-function fig = plotEstimate(mu,P,t,truth,stateNames,plottitle)
+function fig = plotEstimate(mu,P,t,truth,stateNames,plottitle,val)
 % plotEstimate plots the estimate of a dynamical system xhat with iteration
 % along with 2-sigma bounds extracted from the record of covariance
 % matrices P
-% Format of call plotEstimate(xhat,P,t,truth,stateNames,units,plot_title)
+% Format of call plotEstimate(xhat,P,t,truth,stateNames,units,plot_title,val)
 % Returns fig a figure handle to the plot.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -24,8 +24,8 @@ for i  = 1:6% Assumes 4 state Variables
     grid on
     grid minor
     sigma =  sqrt(reshape(P(i,i,:),1,length(mu)));
-    plot(t,mu(i,:)+2*sigma,'r--','LineWidth',lw)
-    plot(t,mu(i,:)-2*sigma,'r--','LineWidth',lw)
+    plot(t,val*mu(i,:)+2*sigma,'r--','LineWidth',lw)
+    plot(t,val*mu(i,:)-2*sigma,'r--','LineWidth',lw)
     xlabel('Time [s]','interpreter','latex')
     ylabel([stateNames{i}])
     title(stateNames{i})
