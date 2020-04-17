@@ -12,7 +12,7 @@ function fig = plotEstimate(mu,P,t,truth,stateNames,plottitle,val)
 % Dr. Matsuo
 % 5/1/2020
 % Created:  4/16/2020
-% Modified: 4/16/2020
+% Modified: 4/17/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fig = figure;
 lw = 1;
@@ -29,7 +29,9 @@ for i  = 1:6% Assumes 4 state Variables
     xlabel('Time [s]','interpreter','latex')
     ylabel([stateNames{i}])
     title(stateNames{i})
-    legend(['Estimated ' stateNames{i}],['True ' stateNames{i}],'2-$\sigma$ Error Bounds')
+    if i == 1
+        legend(['Estimated ' stateNames{i}],['True ' stateNames{i}],'2-\sigma Error Bounds')
+    end
 end
 suptitle(plottitle)
 set(gcf, 'Position', [100, 100, 1100, 730]) %Reposition

@@ -7,15 +7,13 @@
 % Created:  4/10/2020
 % Modified: 4/16/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function ddt = odefun2(~,IC,vg,L,phi_g,va,wa,Q)
+function ddt = odefun2(~,IC,vg,L,phi_g,va,wa)
 %xi_g = IC(1);
 %eta_g = IC(2);
 theta_g = IC(3);
 %xi_a = IC(4);
 %eta_a = IC(5);
 theta_a = IC(6);
-
-w = mvnrnd([0;0;0;0;0;0],Q)'; %Random noise
 
 %Changes in states
 dxi_g = vg*cos(theta_g);
@@ -25,5 +23,5 @@ dxi_a = va*cos(theta_a);
 deta_a = va*sin(theta_a);
 dtheta_a = wa;
 
-ddt = [dxi_g;deta_g;dtheta_g;dxi_a;deta_a;dtheta_a]+w;
+ddt = [dxi_g;deta_g;dtheta_g;dxi_a;deta_a;dtheta_a];
 end
