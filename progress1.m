@@ -13,6 +13,7 @@ clear; close all; clc;
 
 % Make plots?
 plotbool = [0 1 1];
+rng(100);
 
 dt = 0.1;
 vg = 2; %m/s
@@ -120,7 +121,7 @@ end
 %% Monte Carlo - Generate some trials
 num = 50;
 %Generate some truth data sets
-P0 = diag([.5,.5,.1,3,3,.1].^2);
+P0 = 100*diag([.5,.5,.1,2,2,.5].^2);
 xMC = zeros(n,len,num); %Create same trial runs for each filter
 noisymeas = zeros(p,len-1,num);
 for i = 1:num
@@ -175,8 +176,8 @@ end
 NEES_LKF = zeros(num,len);
 NIS_LKF = zeros(num,len-1);
 
-QLKF = .46*Qtrue;
-RLKF = .5*Rtrue;
+QLKF = 50000*Qtrue;
+RLKF = 80*Rtrue;
 for i=1:num
     % Create dy 
     dyLKF =noisymeas(:,:,i)-ynom; %Difference between measurement and nomimal meas
@@ -249,9 +250,9 @@ end
 NEES_EKF = zeros(num,len);
 NIS_EKF = zeros(num,len-1);
 
-REKF = 20*Rtrue;
-REKF(2,2) = 15;
-QEKF = 5*Qtrue;
+REKF = Rtrue;
+QEKF = 20000*Qtrue;
+QEKF(4:6,:) = 20000*Qtrue(4:6,:);
 for i=1:num  
     %Extended KF
     [xEKF,P,NIS_EKF(i,:)] = EKF(inishcondish,P0,time,f,A,Omegak,QEKF,REKF,meas,C,noisymeas(:,:,i));
