@@ -12,7 +12,7 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 0 1];
+plotbool = [0 1 1];
 
 dt = 0.1;
 vg = 2; %m/s
@@ -176,12 +176,13 @@ NEES_LKF = zeros(num,len);
 NIS_LKF = zeros(num,len-1);
 
 QLKF = .46*Qtrue;
+RLKF = .5*Rtrue;
 for i=1:num
     % Create dy 
     dyLKF =noisymeas(:,:,i)-ynom; %Difference between measurement and nomimal meas
     
     %Linearized KF
-    [dxLKF,P,NIS_LKF(i,:)] = LKF(zeros(6,1),P0,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,Rtrue,HkLKF,dyLKF);
+    [dxLKF,P,NIS_LKF(i,:)] = LKF(zeros(6,1),P0,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
     xLKF = xnom + dxLKF;
     
     % Compute NEES
@@ -202,7 +203,7 @@ r4 = chi2inv(1-alpha/2,num*p)./num;
 
 if plotbool(2)
     %Plot the states
-    plotEstimate(xLKF,P,time,xMC(:,:,num),[ugvstates uavstates],'Comparing Truth and Predicted States for a Trial,LKF',1);
+    plotEstimate(xLKF,P,time,xMC(:,:,num),[ugvstates uavstates],'Comparing Truth and Predicted States for a Trial, LKF',1);
     print('LKF_est_tuning','-dpng')
     
     %Plot the delta_states
@@ -223,6 +224,7 @@ if plotbool(2)
     hold on
     plot([0,time(end)],[r1 r1],'--r','LineWidth',2)
     plot([0,time(end)],[r2 r2],'--r','LineWidth',2)
+    gri
     title('NEES Estimation Results, LKF')
     ylabel('NEES Statistic, $\bar{\epsilon}_x$','interpreter','latex','Fontsize',14)
     xlabel('Time [s]')
@@ -236,6 +238,7 @@ if plotbool(2)
     ylabel('NIS Statistic, $\bar{\epsilon}_y$','interpreter','latex','Fontsize',14)
     xlabel('Time [s]')
     set(gcf, 'Position', [100, 100, 1100, 730]) 
+    suptitle('Linearized KF \chi^2 Statistics')
     print('LKF_NEESNIS','-dpng')
 end
 
@@ -243,11 +246,13 @@ end
 NEES_EKF = zeros(num,len);
 NIS_EKF = zeros(num,len-1);
 
-QEKF = Qtrue;
+REKF = 20*Rtrue;
+REKF(2,2) = 15;
+QEKF = 20*Qtrue;
 for i=1:num  
     %Extended KF
-    [xEKF,P,NIS_EKF(i,:)] = EKF(inishcondish,P0,time,f,A,Omegak,QEKF,Rtrue,meas,C,noisymeas(:,:,i));
-    
+    [xEKF,P,NIS_EKF(i,:)] = EKF(inishcondish,P0,time,f,A,Omegak,QEKF,REKF,meas,C,noisymeas(:,:,i));
+    xEKF([3 6],:) = wrapToPi(xEKF([3 6],:));
     
     % Compute NEES
     epsx = xMC(:,:,i)-xEKF;
@@ -264,35 +269,40 @@ if plotbool(3)
     print('EKF_est_tuning','-dpng')
         
     %Plot the errors
-    err = xMC(:,:,num)-xLKF;
+    err = xMC(:,:,num)-xEKF;
     err([3 6],:) = wrapToPi(err([3 6],:));
     plotEstimate(err,P,time,zeros(n,len),[ugvstates uavstates],'State Estimation Errors, EKF',0);
     print('EKF_error_tuning','-dpng')
     
     figure
     subplot(1,2,1)
-    plot(time,NEES_avg_LKF,'ko','LineWidth',1)
+    plot(time,NEES_avg_EKF,'ko','LineWidth',1)
     hold on
     plot([0,time(end)],[r1 r1],'--r','LineWidth',2)
     plot([0,time(end)],[r2 r2],'--r','LineWidth',2)
+    grid on
+    grid minor
     title('NEES Estimation Results, EKF')
     ylabel('NEES Statistic, $\bar{\epsilon}_x$','interpreter','latex','Fontsize',14)
     xlabel('Time [s]')
     
     subplot(1,2,2)
-    plot(time(2:end),NIS_avg_LKF,'ko','LineWidth',1)
+    plot(time(2:end),NIS_avg_EKF,'ko','LineWidth',1)
     hold on
     plot([time(2),time(end)],[r3 r3],'--r','LineWidth',2)
     plot([time(2),time(end)],[r4 r4],'--r','LineWidth',2)
+    grid on
+    grid minor
     title('NIS Estimation Results, EKF')
     ylabel('NIS Statistic, $\bar{\epsilon}_y$','interpreter','latex','Fontsize',14)
     xlabel('Time [s]')
     set(gcf, 'Position', [100, 100, 1100, 730]) 
+    suptitle('Extended KF \chi^2 Statistics')
     print('EKF_NEESNIS','-dpng')
 end
 
 
 %% Implement Filters on the Provided Data
-% Hopefully easy
+% Hopefully easy (LOL)
 
 
