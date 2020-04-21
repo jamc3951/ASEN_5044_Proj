@@ -1,4 +1,4 @@
-function [dx,P,epsky] = LKF(dx0,P0,time,Fk,Gk,du,Omegak,Q,R,Hk,dy)
+function [dx,P,epsky,innovation] = LKF(dx0,P0,time,Fk,Gk,du,Omegak,Q,R,Hk,dy)
 % LKF implements a linearized Kalman Filter
 % Format of call: 
 % Returns: [dx,P,eps] where dx is a matrix with the state estimates as a
@@ -15,10 +15,12 @@ function [dx,P,epsky] = LKF(dx0,P0,time,Fk,Gk,du,Omegak,Q,R,Hk,dy)
 n = length(dx0);
 len = length(time);
 I = eye(n);
+p = length(R);
 
 dx = zeros(n,len);
 P = zeros(n,n,len);
 epsky = zeros(1,len-1);
+innovation = zeros(p,len-1);
 dx(:,1) = dx0;
 P(:,:,1) = P0;
 covaradd = Omegak*Q*Omegak';
@@ -33,6 +35,7 @@ for i = 2:len;
     yhat = H*dxminus;
     K = Pminus*H'/Sk; % MATLAB will take inverse
     eyk = dy(:,i-1) - yhat;
+    innovation(:,i-1) = eyk;
     epsky(i-1) = eyk'/Sk*eyk; %Normalized Innovation Squared (NIS)
     dx(:,i) = dxminus + K*(eyk);
     P(:,:,i) = (I-K*H)*Pminus;

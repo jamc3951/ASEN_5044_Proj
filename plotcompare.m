@@ -20,11 +20,11 @@ for i = 1:iter
     subplot(iter,1,i)
     hold on;
     grid on;
-    plot(tnl,xnl(i,:),'.','Markersize',20);
+    plot(tnl,xnl(i,:),'.','Markersize',10);
     plot(tl,xl(i,:),'linewidth',2);
     ylabel(labels{i},'Fontsize',14);
     if i==1
-        legend('ode45', 'Linearized')
+        legend('Measured', 'Predicted')
     end
 end
 xlabel('Time [s]','Fontsize',14);

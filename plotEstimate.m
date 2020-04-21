@@ -16,7 +16,7 @@ function fig = plotEstimate(mu,P,t,truth,stateNames,plottitle,val)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 fig = figure;
 lw = 1;
-for i  = 1:6% Assumes 4 state Variables
+for i  = 1:6% Assumes 6 state Variables
     subplot(2,3,i)
     plot(t,mu(i,:),'b','LineWidth',lw);
     hold on

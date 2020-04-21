@@ -183,7 +183,7 @@ for i=1:num
     dyLKF =noisymeas(:,:,i)-ynom; %Difference between measurement and nomimal meas
     
     %Linearized KF
-    [dxLKF,P,NIS_LKF(i,:)] = LKF(zeros(6,1),P0,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
+    [dxLKF,P,NIS_LKF(i,:),innovations] = LKF(zeros(6,1),P0,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
     xLKF = xnom + dxLKF;
     
     % Compute NEES
@@ -244,6 +244,9 @@ if plotbool(2)
     set(gcf, 'Position', [100, 100, 1100, 730]) 
     suptitle('Linearized KF \chi^2 Statistics')
     print('LKF_NEESNIS','-dpng')
+    
+    plotcompare(time(2:end),innovations,time(2:end),zeros(p,len-1),measLabels,'Error in Measurements, LKF');
+    print('LKF_innov','-dpng')
 end
 
 %% Extended Kalman Filter
@@ -255,7 +258,7 @@ QEKF = 20000*Qtrue;
 QEKF(4:6,:) = 20000*Qtrue(4:6,:);
 for i=1:num  
     %Extended KF
-    [xEKF,P,NIS_EKF(i,:)] = EKF(inishcondish,P0,time,f,A,Omegak,QEKF,REKF,meas,C,noisymeas(:,:,i));
+    [xEKF,P,NIS_EKF(i,:),innovations] = EKF(inishcondish,P0,time,f,A,Omegak,QEKF,REKF,meas,C,noisymeas(:,:,i));
     xEKF([3 6],:) = wrapToPi(xEKF([3 6],:));
     
     % Compute NEES
@@ -303,6 +306,9 @@ if plotbool(3)
     set(gcf, 'Position', [100, 100, 1100, 730]) 
     suptitle('Extended KF \chi^2 Statistics')
     print('EKF_NEESNIS','-dpng')
+    
+    plotcompare(time(2:end),innovations,time(2:end),zeros(p,len-1),measLabels,'Error in Measurements, EKF');
+    print('EKF_innov','-dpng')
 end
 
 

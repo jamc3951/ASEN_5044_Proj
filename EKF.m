@@ -1,4 +1,4 @@
-function [x,P,NIS] = EKF(x0,P0,time,f,A,Omegak,Q,R,h,C,y)
+function [x,P,NIS,innovation] = EKF(x0,P0,time,f,A,Omegak,Q,R,h,C,y)
 % EKF implements an extended Kalman Filter
 % Format of call: 
 % Returns: [x,P,NIS] where x is a matrix with the state estimates as a
@@ -15,10 +15,12 @@ function [x,P,NIS] = EKF(x0,P0,time,f,A,Omegak,Q,R,h,C,y)
 n = length(x0);
 len = length(time);
 I = eye(n);
+p = length(R);
 
 x = zeros(n,len);
 P = zeros(n,n,len);
 NIS = zeros(1,len-1);
+innovation = zeros(p,len-1);
 x(:,1) = x0;
 P(:,:,1) = P0;
 covaradd = Omegak*Q*Omegak';
@@ -41,6 +43,7 @@ for i = 2:len;
     yhat = h(xminus); %Full nonlinear dynamics
     K = Pminus*H'/Sk; % MATLAB will take inverse
     eyk = y(:,i-1) - yhat;
+    innovation(:,i-1) = eyk; 
     NIS(i-1) = eyk'/Sk*eyk; %Normalized Innovation Squared (NIS)
     x(:,i) = xminus + K*(eyk);
     P(:,:,i) = (I-K*H)*Pminus;
