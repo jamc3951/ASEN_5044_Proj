@@ -190,7 +190,7 @@ for i = 1:len-1
 end
 
 QLKF = 10000*Qtrue;
-RLKF = 3*Rtrue;
+RLKF = 10*Rtrue;
 P0_LKF = 100*P0; %Cheating?
 
 if runbool(1) && runbool(2)
@@ -200,7 +200,7 @@ NIS_LKF = zeros(num,len-1);
 for i=1:num
     % Create dy 
     dyLKF =noisymeas(:,:,i)-ynom; %Difference between measurement and nomimal meas
-    dyLKF([1 3],:) = angdiff(ynom([1 3],:),noisymeas([1 3],:,i));
+    dyLKF([1 3],:) = wrapToPi(noisymeas([1 3],:,i)-ynom([1 3],:));
     
     %Linearized KF
     [dxLKF,P,NIS_LKF(i,:),innovations] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
@@ -208,7 +208,7 @@ for i=1:num
     
     % Compute NEES
     epsx = xMC(:,:,i)-xLKF;
-    epsx([3 6],:) = angdiff(xLKF([3 6],:),xMC([3 6],:,i));
+    epsx([3 6],:) = wrapToPi(xMC([3 6],:,i)-xLKF([3 6],:));
     for j = 1:len
         NEES_LKF(i,j) = epsx(:,j)'/P(:,:,j)*epsx(:,j);
     end
@@ -223,15 +223,13 @@ if plotbool(2)
     
     %Plot the delta_states
     dev = xMC(:,:,num)-xnom;
-    %dev([3 6],:) = wrapToPi(dev([3 6],:));
-    dev([3 6],:) = angdiff(xnom([3 6],:),xMC([3 6],:,num));
+    dev([3 6],:) = wrapToPi(xMC([3 6],:,num)-xnom([3 6],:));
     plotEstimate(dxLKF,P,time,dev,[ugvstates uavstates],'Comparing Delta States for a Trial, LKF',1);
     print('LKF_delta_est_tuning','-dpng')
     
     %Plot the errors
     err = xMC(:,:,num)-xLKF;
-    %err([3 6],:) = wrapToPi(err([3 6],:));
-    err([3 6],:) = angdiff(xLKF([3 6],:),xMC([3 6],:,num));
+    err([3 6],:) = wrapToPi(xMC([3 6],:,num)-xLKF([3 6],:));
     plotEstimate(err,P,time,zeros(n,len),[ugvstates uavstates],'State Estimation Errors, LKF',0);
     print('LKF_error_tuning','-dpng')
     
@@ -283,7 +281,7 @@ for i=1:num
     
     % Compute NEES
     epsx = xMC(:,:,i)-xEKF;
-    epsx([3 6],:) = angdiff(xEKF([3 6],:),xMC([3 6],:,i));
+    epsx([3 6],:) = wrapToPi(xMC([3 6],:,i)-xEKF([3 6],:));
     for j = 1:len
         NEES_EKF(i,j) = epsx(:,j)'/P(:,:,j)*epsx(:,j);
     end
@@ -298,7 +296,7 @@ if plotbool(3)
         
     %Plot the errors
     err = xMC(:,:,num)-xEKF;
-    err([3 6],:) = angdiff(xEKF([3 6],:),xMC([3 6],:,num));
+    err([3 6],:) = wrapToPi(xMC([3 6],:,num)-xEKF([3 6],:));
     plotEstimate(err,P,time,zeros(n,len),[ugvstates uavstates],'State Estimation Errors, EKF',0);
     print('EKF_error_tuning','-dpng')
     
