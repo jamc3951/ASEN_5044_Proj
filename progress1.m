@@ -207,6 +207,7 @@ for i=1:num
     
     % Compute NEES
     epsx = xMC(:,:,i)-xLKF;
+    epsx([3 6],:) = angdiff(xLKF([3 6],:),xMC([3 6],:,i));
     for j = 1:len
         NEES_LKF(i,j) = epsx(:,j)'/(P(:,:,j)*epsx(:,j));
     end
@@ -221,13 +222,15 @@ if plotbool(2)
     
     %Plot the delta_states
     dev = xMC(:,:,num)-xnom;
-    dev([3 6],:) = wrapToPi(dev([3 6],:));
+    %dev([3 6],:) = wrapToPi(dev([3 6],:));
+    dev([3 6],:) = angdiff(xnom([3 6],:),xMC([3 6],:,num));
     plotEstimate(dxLKF,P,time,dev,[ugvstates uavstates],'Comparing Delta States for a Trial, LKF',1);
     print('LKF_delta_est_tuning','-dpng')
     
     %Plot the errors
     err = xMC(:,:,num)-xLKF;
-    err([3 6],:) = wrapToPi(err([3 6],:));
+    %err([3 6],:) = wrapToPi(err([3 6],:));
+    err([3 6],:) = angdiff(xLKF([3 6],:),xMC([3 6],:,num));
     plotEstimate(err,P,time,zeros(n,len),[ugvstates uavstates],'State Estimation Errors, LKF',0);
     print('LKF_error_tuning','-dpng')
     
@@ -264,8 +267,8 @@ end
 
 %% Extended Kalman Filter
 REKF = Rtrue;
-QEKF = 200*Qtrue;
-%QEKF(4:6,:) = 5000*Qtrue(4:6,:);
+QEKF = 10*Qtrue;
+%QEKF(4:6,:) = 100*Qtrue(4:6,:);
 P0_EKF = 100*P0;
 
 if runbool(1) && runbool(3)
@@ -279,6 +282,7 @@ for i=1:num
     
     % Compute NEES
     epsx = xMC(:,:,i)-xEKF;
+    epsx([3 6],:) = angdiff(xEKF([3 6],:),xMC([3 6],:,i));
     for j = 1:len
         NEES_EKF(i,j) = epsx(:,j)'/P(:,:,j)*epsx(:,j);
     end
@@ -293,7 +297,7 @@ if plotbool(3)
         
     %Plot the errors
     err = xMC(:,:,num)-xEKF;
-    err([3 6],:) = wrapToPi(err([3 6],:));
+    err([3 6],:) = angdiff(xEKF([3 6],:),xMC([3 6],:,num));
     plotEstimate(err,P,time,zeros(n,len),[ugvstates uavstates],'State Estimation Errors, EKF',0);
     print('EKF_error_tuning','-dpng')
     

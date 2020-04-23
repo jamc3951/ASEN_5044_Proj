@@ -12,8 +12,8 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 0 1 1]; %Noiseless Prop, LKF Tune, EKF Tune, Implement
-runbool = [0 1 1 1]; %MC, LKF Tuning, EKF Tuning, Implement
+plotbool = [0 0 1 0]; %Noiseless Prop, LKF Tune, EKF Tune, Implement
+runbool = [1 0 1 0]; %MC, LKF Tuning, EKF Tuning, Implement
 %rng(100);
 
 dt = 0.1;
@@ -121,10 +121,12 @@ end
 
 
 %% Monte Carlo - Generate some trials
-if runbool(1)
-num = 10;
-%Generate some truth data sets
+
 P0 = diag([.5,.5,.1,2,2,.5].^2);
+
+if runbool(1)
+num = 100;
+%Generate some truth data sets
 xMC = zeros(n,len,num); %Create same trial runs for each filter
 noisymeas = zeros(p,len-1,num);
 for i = 1:num
@@ -206,7 +208,7 @@ for i=1:num
     % Compute NEES
     epsx = xMC(:,:,i)-xLKF;
     for j = 1:len
-        NEES_LKF(i,j) = epsx(:,j)'*(P(:,:,j)\epsx(:,j));
+        NEES_LKF(i,j) = epsx(:,j)'/(P(:,:,j)*epsx(:,j));
     end
 end
 NEES_avg_LKF = mean(NEES_LKF);
@@ -261,14 +263,15 @@ end
 end
 
 %% Extended Kalman Filter
+REKF = Rtrue;
+QEKF = 100*Qtrue;
+QEKF(4:6,:) = 10*Qtrue(4:6,:);
+P0_EKF = 100*P0;
+
 if runbool(1) && runbool(3)
 NEES_EKF = zeros(num,len);
 NIS_EKF = zeros(num,len-1);
 
-REKF = Rtrue;
-QEKF = 20000*Qtrue;
-QEKF(4:6,:) = 20000*Qtrue(4:6,:);
-P0_EKF = 100*P0;
 for i=1:num  
     %Extended KF
     [xEKF,P,NIS_EKF(i,:),innovations] = EKF(inishcondish,P0_EKF,time,f,A,Omegak,QEKF,REKF,meas,C,noisymeas(:,:,i));
@@ -276,6 +279,7 @@ for i=1:num
     
     % Compute NEES
     epsx = xMC(:,:,i)-xEKF;
+    epsx()
     for j = 1:len
         NEES_EKF(i,j) = epsx(:,j)'/P(:,:,j)*epsx(:,j);
     end
@@ -290,7 +294,8 @@ if plotbool(3)
         
     %Plot the errors
     err = xMC(:,:,num)-xEKF;
-    err([3 6],:) = wrapToPi(err([3 6],:));
+    %err([3 6],:) = wrapToPi(err([3 6],:));
+    err([3 6],:) = angdiff(xMC([3 6],:,num),xEKF([3 6],:));
     plotEstimate(err,P,time,zeros(n,len),[ugvstates uavstates],'State Estimation Errors, EKF',0);
     print('EKF_error_tuning','-dpng')
     
@@ -327,9 +332,14 @@ end
 
 %% Implement Filters on the Provided Data
 % Hopefully easy (LOL)
-if runbool(3)
-    
-    if runbool(1)
+if runbool(4)
+    alpha = .05; %significance level
+    num = 1;
+    r1 = chi2inv(alpha/2,num*n)./num;
+    r2 = chi2inv(1-alpha/2,num*n)./num;
+    r3 = chi2inv(alpha/2,num*p)./num;
+    r4 = chi2inv(1-alpha/2,num*p)./num;
+    if runbool(2)
         dyLKF = ydata-ynom;
         [dxLKF,P,NIS_LKF,innovations] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
         xLKF = xnom + dxLKF;
@@ -362,7 +372,7 @@ if runbool(3)
 
         end
     end
-    if runbool(2)
+    if runbool(3)
         [xEKF,P,NIS_EKF,innovations] = EKF(inishcondish,P0_EKF,time,f,A,Omegak,QEKF,REKF,meas,C,ydata);
         xEKF([3 6],:) = wrapToPi(xEKF([3 6],:));
         if plotbool(4)

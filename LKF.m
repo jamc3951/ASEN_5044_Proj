@@ -35,6 +35,7 @@ for i = 2:len;
     yhat = H*dxminus;
     K = Pminus*H'/Sk; % MATLAB will take inverse
     eyk = dy(:,i-1) - yhat;
+    eyk([1 3]) = angdiff(yhat([1 3]),dy([1 3],i-1)); %no longer general
     innovation(:,i-1) = eyk;
     epsky(i-1) = eyk'/Sk*eyk; %Normalized Innovation Squared (NIS)
     dx(:,i) = dxminus + K*(eyk);
