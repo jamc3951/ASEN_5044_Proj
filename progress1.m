@@ -190,7 +190,7 @@ for i = 1:len-1
 end
 
 QLKF = 10000*Qtrue;
-RLKF = 10*Rtrue;
+RLKF = 100*Rtrue;
 P0_LKF = 100*P0; %Cheating?
 
 if runbool(1) && runbool(2)
