@@ -12,8 +12,9 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 1 1];
-rng(100);
+plotbool = [0 0 1 0]; %Noiseless Prop, LKF Tune, EKF Tune, Implement
+runbool = [1 0 1 0]; %MC, LKF Tuning, EKF Tuning, Implement
+%rng(100);
 
 dt = 0.1;
 vg = 2; %m/s
@@ -53,6 +54,7 @@ load('cooplocalization_finalproj_KFdata.mat');
 % Rtrue
 % tvec
 % ydata
+ydata(:,1) = [];
 
 %% Use ode45 To Predict State
 % [t_ode, x_ode] = ode45(@(t,y) odefun2(t,y,vg,L,phi_g,va,wa), [0 100], perturbed_state);
@@ -119,9 +121,12 @@ end
 
 
 %% Monte Carlo - Generate some trials
-num = 50;
+
+P0 = diag([.5,.5,.1,2,2,.5].^2);
+
+if runbool(1)
+num = 100;
 %Generate some truth data sets
-P0 = 100*diag([.5,.5,.1,2,2,.5].^2);
 xMC = zeros(n,len,num); %Create same trial runs for each filter
 noisymeas = zeros(p,len-1,num);
 for i = 1:num
@@ -147,6 +152,7 @@ for i = 1:num
         k2 = dt*f(t+dt/2,u+k1/2);
         k3 = dt*f(t+dt/2,u+k2/2);
         k4 = dt*f(t+dt,u+k3);
+        %u = u+(k1+2*k2+2*k3+k4)/6;
         u = u+(k1+2*k2+2*k3+k4)/6 + mvnrnd(zeros(1,6),Omegak*Qtrue*Omegak')';
         xMC(:,j,i)= u;
         t = t+dt;
@@ -156,10 +162,20 @@ for i = 1:num
     % Generate measurements 
     measMC = meas(xMC(:,2:end,i)); %Exact measurements for the states
     noisymeas(:,:,i) = measMC + mvnrnd([0;0;0;0;0],Rtrue,len-1)'; %added noise
+    %noisymeas(:,:,i) = measMC; %added noise
 end
 
 
+% Make the plots requested (a single trial - use xLKF and P, NEES and NIS)
+alpha = .05; %significance level
+r1 = chi2inv(alpha/2,num*n)./num;
+r2 = chi2inv(1-alpha/2,num*n)./num;
+r3 = chi2inv(alpha/2,num*p)./num;
+r4 = chi2inv(1-alpha/2,num*p)./num;
+end
+
 %% Linearized KF - Compute what we can offline
+
 FkLKF = zeros(n,n,len-1); % F(1) is F_0
 GkLKF = zeros(n,d,len-1); % G(1) is G_0
 OmegakLKF = dt*Gamma; %Constant for all time
@@ -173,34 +189,30 @@ for i = 1:len-1
     HkLKF(:,:,i) = C(xnom(:,i+1)); %Recall indexing different
 end
 
+QLKF = 50000*Qtrue;
+RLKF = 80*Rtrue;
+P0_LKF = 100*P0; %Cheating?
+
+if runbool(1) && runbool(2)
 NEES_LKF = zeros(num,len);
 NIS_LKF = zeros(num,len-1);
 
-QLKF = 50000*Qtrue;
-RLKF = 80*Rtrue;
 for i=1:num
     % Create dy 
     dyLKF =noisymeas(:,:,i)-ynom; %Difference between measurement and nomimal meas
     
     %Linearized KF
-    [dxLKF,P,NIS_LKF(i,:),innovations] = LKF(zeros(6,1),P0,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
+    [dxLKF,P,NIS_LKF(i,:),innovations] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
     xLKF = xnom + dxLKF;
     
     % Compute NEES
     epsx = xMC(:,:,i)-xLKF;
     for j = 1:len
-        NEES_LKF(i,j) = epsx(:,j)'*(P(:,:,j)\epsx(:,j));
+        NEES_LKF(i,j) = epsx(:,j)'/(P(:,:,j)*epsx(:,j));
     end
 end
 NEES_avg_LKF = mean(NEES_LKF);
 NIS_avg_LKF = mean(NIS_LKF);
-
-% Make the plots requested (a single trial - use xLKF and P, NEES and NIS)
-alpha = .05; %significance level
-r1 = chi2inv(alpha/2,num*n)./num;
-r2 = chi2inv(1-alpha/2,num*n)./num;
-r3 = chi2inv(alpha/2,num*p)./num;
-r4 = chi2inv(1-alpha/2,num*p)./num;
 
 if plotbool(2)
     %Plot the states
@@ -248,23 +260,27 @@ if plotbool(2)
     plotcompare(time(2:end),innovations,time(2:end),zeros(p,len-1),measLabels,'Error in Measurements, LKF');
     print('LKF_innov','-dpng')
 end
+end
 
 %% Extended Kalman Filter
+REKF = Rtrue;
+QEKF = 200*Qtrue;
+%QEKF(4:6,:) = 5000*Qtrue(4:6,:);
+P0_EKF = 100*P0;
+
+if runbool(1) && runbool(3)
 NEES_EKF = zeros(num,len);
 NIS_EKF = zeros(num,len-1);
 
-REKF = Rtrue;
-QEKF = 20000*Qtrue;
-QEKF(4:6,:) = 20000*Qtrue(4:6,:);
 for i=1:num  
     %Extended KF
-    [xEKF,P,NIS_EKF(i,:),innovations] = EKF(inishcondish,P0,time,f,A,Omegak,QEKF,REKF,meas,C,noisymeas(:,:,i));
+    [xEKF,P,NIS_EKF(i,:),innovations] = EKF(inishcondish,P0_EKF,time,f,A,Omegak,QEKF,REKF,meas,C,noisymeas(:,:,i));
     xEKF([3 6],:) = wrapToPi(xEKF([3 6],:));
     
     % Compute NEES
     epsx = xMC(:,:,i)-xEKF;
     for j = 1:len
-        NEES_EKF(i,j) = epsx(:,j)'*(P(:,:,j)\epsx(:,j));
+        NEES_EKF(i,j) = epsx(:,j)'/P(:,:,j)*epsx(:,j);
     end
 end
 NEES_avg_EKF = mean(NEES_EKF);
@@ -310,9 +326,76 @@ if plotbool(3)
     plotcompare(time(2:end),innovations,time(2:end),zeros(p,len-1),measLabels,'Error in Measurements, EKF');
     print('EKF_innov','-dpng')
 end
-
+end
 
 %% Implement Filters on the Provided Data
 % Hopefully easy (LOL)
+if runbool(4)
+    alpha = .05; %significance level
+    num = 1;
+    r1 = chi2inv(alpha/2,num*n)./num;
+    r2 = chi2inv(1-alpha/2,num*n)./num;
+    r3 = chi2inv(alpha/2,num*p)./num;
+    r4 = chi2inv(1-alpha/2,num*p)./num;
+    if runbool(2)
+        dyLKF = ydata-ynom;
+        [dxLKF,P,NIS_LKF,innovations] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
+        xLKF = xnom + dxLKF;
+        if plotbool(4)
+            %Plot the states
+            filterEstimate(xLKF,P,time,[ugvstates uavstates],'LKF State Prediction Estimates',1);
+            print('LKF_on_given','-dpng')
 
+            %Plot the delta_states
+            filterEstimate(dxLKF,P,time,[ugvstates uavstates],'LKF \delta x Predictions',1);
+            print('LKF_delta_est_implement','-dpng')
+            
+            %Plot the NIS Statistics
+            figure
+            plot(time(2:end),NIS_LKF,'ko','LineWidth',1)
+            hold on
+            plot([time(2),time(end)],[r3 r3],'--r','LineWidth',2)
+            plot([time(2),time(end)],[r4 r4],'--r','LineWidth',2)
+            grid on
+            grid minor
+            title('NIS Results for implemented LKF')
+            ylabel('NIS Statistic, $\bar{\epsilon}_y$','interpreter','latex','Fontsize',14)
+            xlabel('Time [s]')
+            set(gcf, 'Position', [100, 100, 1100, 730]) 
+            print('LKF_NIS','-dpng')
+
+            %Plot the Expected vs true Measurements
+            plotcompare(time(2:end),innovations,time(2:end),zeros(p,len-1),measLabels,'Error in Measurements, LKF');
+            print('LKF_innov_implementation','-dpng')
+
+        end
+    end
+    if runbool(3)
+        [xEKF,P,NIS_EKF,innovations] = EKF(inishcondish,P0_EKF,time,f,A,Omegak,QEKF,REKF,meas,C,ydata);
+        xEKF([3 6],:) = wrapToPi(xEKF([3 6],:));
+        if plotbool(4)
+            %Plot the states
+            filterEstimate(xEKF,P,time,[ugvstates uavstates],'EKF State Prediction Estimates',1);
+            print('EKF_on_given','-dpng')
+            
+            %Plot the NIS Statistics
+            figure
+            plot(time(2:end),NIS_EKF,'ko','LineWidth',1)
+            hold on
+            plot([time(2),time(end)],[r3 r3],'--r','LineWidth',2)
+            plot([time(2),time(end)],[r4 r4],'--r','LineWidth',2)
+            grid on
+            grid minor
+            title('NIS Results for implemented EKF')
+            ylabel('NIS Statistic, $\bar{\epsilon}_y$','interpreter','latex','Fontsize',14)
+            xlabel('Time [s]')
+            set(gcf, 'Position', [100, 100, 1100, 730]) 
+            print('EKF_NIS','-dpng')
+
+            %Plot the Expected vs true Measurements
+            plotcompare(time(2:end),innovations,time(2:end),zeros(p,len-1),measLabels,'Error in Measurements, EKF');
+            print('EKF_innov_implementation','-dpng')
+        end
+    end
+end
 
