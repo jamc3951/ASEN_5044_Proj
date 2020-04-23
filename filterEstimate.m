@@ -17,7 +17,7 @@ function fig = filterEstimate(mu,P,t,stateNames,plottitle,val)
 fig = figure;
 lw = 1;
 for i  = 1:6% Assumes 6 state Variables
-    subplot(2,3,i)
+    subplot(6,1,i)
     plot(t,mu(i,:),'b','LineWidth',lw);
     hold on
     grid on
@@ -25,11 +25,12 @@ for i  = 1:6% Assumes 6 state Variables
     sigma =  sqrt(reshape(P(i,i,:),1,length(mu)));
     plot(t,val*mu(i,:)+2*sigma,'r--','LineWidth',lw)
     plot(t,val*mu(i,:)-2*sigma,'r--','LineWidth',lw)
-    xlabel('Time [s]','interpreter','latex')
     ylabel([stateNames{i}])
-    title(stateNames{i})
     if i == 1
-        legend(['Estimated ' stateNames{i}],['True ' stateNames{i}],'2-\sigma Error Bounds')
+        legend(['Estimated ' stateNames{i}],'2-\sigma Error Bounds')
+    end
+    if i==6
+        xlabel('Time [s]')
     end
 end
 suptitle(plottitle)

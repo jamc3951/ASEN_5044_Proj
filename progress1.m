@@ -12,8 +12,8 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 0 1 0]; %Noiseless Prop, LKF Tune, EKF Tune, Implement
-runbool = [1 0 1 0]; %MC, LKF Tuning, EKF Tuning, Implement
+plotbool = [0 1 0 0]; %Noiseless Prop, LKF Tune, EKF Tune, Implement
+runbool = [1 1 0 0]; %MC, LKF Tuning, EKF Tuning, Implement
 %rng(100);
 
 dt = 0.1;
@@ -162,7 +162,7 @@ for i = 1:num
     % Generate measurements 
     measMC = meas(xMC(:,2:end,i)); %Exact measurements for the states
     noisymeas(:,:,i) = measMC + mvnrnd([0;0;0;0;0],Rtrue,len-1)'; %added noise
-    %noisymeas(:,:,i) = measMC; %added noise
+    %noisymeas(:,:,i) = measMC; %No noise
 end
 
 
@@ -189,8 +189,8 @@ for i = 1:len-1
     HkLKF(:,:,i) = C(xnom(:,i+1)); %Recall indexing different
 end
 
-QLKF = 50000*Qtrue;
-RLKF = 80*Rtrue;
+QLKF = 10000*Qtrue;
+RLKF = 3*Rtrue;
 P0_LKF = 100*P0; %Cheating?
 
 if runbool(1) && runbool(2)
@@ -200,6 +200,7 @@ NIS_LKF = zeros(num,len-1);
 for i=1:num
     % Create dy 
     dyLKF =noisymeas(:,:,i)-ynom; %Difference between measurement and nomimal meas
+    dyLKF([1 3],:) = angdiff(ynom([1 3],:),noisymeas([1 3],:,i));
     
     %Linearized KF
     [dxLKF,P,NIS_LKF(i,:),innovations] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
@@ -209,7 +210,7 @@ for i=1:num
     epsx = xMC(:,:,i)-xLKF;
     epsx([3 6],:) = angdiff(xLKF([3 6],:),xMC([3 6],:,i));
     for j = 1:len
-        NEES_LKF(i,j) = epsx(:,j)'/(P(:,:,j)*epsx(:,j));
+        NEES_LKF(i,j) = epsx(:,j)'/P(:,:,j)*epsx(:,j);
     end
 end
 NEES_avg_LKF = mean(NEES_LKF);
@@ -267,9 +268,9 @@ end
 
 %% Extended Kalman Filter
 REKF = Rtrue;
-QEKF = 10*Qtrue;
-%QEKF(4:6,:) = 100*Qtrue(4:6,:);
-P0_EKF = 100*P0;
+QEKF = Qtrue;
+QEKF(1:2,:) = .1*Qtrue(1:2,:);
+P0_EKF = P0;
 
 if runbool(1) && runbool(3)
 NEES_EKF = zeros(num,len);
