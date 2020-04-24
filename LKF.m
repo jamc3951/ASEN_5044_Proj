@@ -1,4 +1,4 @@
-function [dx,P,epsky,innovation] = LKF(dx0,P0,time,Fk,Gk,du,Omegak,Q,R,Hk,dy)
+function [dx,P,innovation,Sk] = LKF(dx0,P0,time,Fk,Gk,du,Omegak,Q,R,Hk,dy)
 % LKF implements a linearized Kalman Filter
 % Format of call: 
 % Returns: [dx,P,eps] where dx is a matrix with the state estimates as a
@@ -19,28 +19,30 @@ p = length(R);
 
 dx = zeros(n,len);
 P = zeros(n,n,len);
-epsky = zeros(1,len-1);
 innovation = zeros(p,len-1);
+Sk = zeros(p,p,len-1);
 dx(:,1) = dx0;
 P(:,:,1) = P0;
 covaradd = Omegak*Q*Omegak';
 for i = 2:len;
     F = Fk(:,:,i-1);
     dxminus = F*dx(:,i-1) + Gk(:,:,i-1)*du(:,i-1);
-%    dxminus([3 6]) = wrapToPi(dxminus([3 6]));
+    dxminus([3 6]) = wrapToPi(dxminus([3 6]));
     Pminus = F*P(:,:,i-1)*F' + covaradd;
        
     H = Hk(:,:,i-1);
-    Sk = H*Pminus*H' + R;
-    Sk = .5*(Sk+Sk'); %Make positive definite?
+    Ski = H*Pminus*H' + R;
+    Ski = .5*(Ski+Ski'); %Make positive definite
+    Sk(:,:,i-1) = Ski;
     yhat = H*dxminus;
     yhat([1 3]) = wrapToPi(yhat([1 3]));
-    K = Pminus*H'/Sk; % MATLAB will take inverse
+    K = Pminus*H'/Ski; % MATLAB will take inverse
     eyk = dy(:,i-1) - yhat;
     eyk([1 3]) = wrapToPi(dy([1 3],i-1)-yhat([1 3])); %no longer general
     innovation(:,i-1) = eyk;
-    epsky(i-1) = eyk'/Sk*eyk; %Normalized Innovation Squared (NIS)
-    dx(:,i) = dxminus + K*(eyk);
+    dxplus = dxminus + K*(eyk);
+    dxplus([3 6]) = wrapToPi(dxplus([3 6]));
+    dx(:,i) = dxplus;
     P(:,:,i) = (I-K*H)*Pminus;
 end
 end

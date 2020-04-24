@@ -24,7 +24,7 @@ for i = 1:iter
     plot(tl,xl(i,:),'linewidth',2);
     ylabel(labels{i},'Fontsize',14);
     if i==1
-        legend('Measured', 'Predicted')
+        legend('ode45', 'Linearized')
     end
 end
 xlabel('Time [s]','Fontsize',14);

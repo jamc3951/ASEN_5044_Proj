@@ -30,7 +30,7 @@ for i  = 1:6% Assumes 6 state Variables
     ylabel([stateNames{i}])
     title(stateNames{i})
     if i == 1
-        legend(['Estimated ' stateNames{i}],['True ' stateNames{i}],'2-\sigma Error Bounds')
+        legend('Estimate','Truth','2-\sigma Error Bounds')
     end
 end
 suptitle(plottitle)
