@@ -12,8 +12,8 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 1 1 0]; %Noiseless Prop, LKF Tuning, EKF Tuning, Implement
-runbool = [1 1 1 0]; %MC, LKF Tuning, EKF Tuning, Implement
+plotbool = [0 1 0 0]; %Noiseless Prop, LKF Tuning, EKF Tuning, Implement
+runbool = [1 1 0 0]; %MC, LKF Tuning, EKF Tuning, Implement
 rng(101);
 
 dt = 0.1;
@@ -190,11 +190,9 @@ for i = 1:len-1
     HkLKF(:,:,i) = C(xnom(:,i+1)); %Recall indexing different
 end
 
-QLKF = Qtrue;
+QLKF = 1000*Qtrue;
 %QLKF(3:6,:) = 10000*Qtrue(3:6,:);
-RLKF = Rtrue;
-% RLKF = Rtrue;
-% QLKF = Qtrue;
+RLKF = 7*Rtrue;
 P0_LKF = 1000*P0; 
 
 if runbool(1) && runbool(2)
