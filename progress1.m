@@ -12,9 +12,9 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 1 0 0]; %Noiseless Prop, LKF Tune, EKF Tune, Implement
-runbool = [1 1 0 0]; %MC, LKF Tuning, EKF Tuning, Implement
-%rng(100);
+plotbool = [0 1 1 0]; %Noiseless Prop, LKF Tuning, EKF Tuning, Implement
+runbool = [1 1 1 0]; %MC, LKF Tuning, EKF Tuning, Implement
+rng(101);
 
 dt = 0.1;
 vg = 2; %m/s
@@ -122,10 +122,10 @@ end
 
 %% Monte Carlo - Generate some trials
 
-P0 = diag([.5,.5,.1,2,2,.5].^2);
+P0 = 0.1*diag([.5,.5,.1,2,2,.5].^2);
 
 if runbool(1)
-num = 100;
+num = 20;
 %Generate some truth data sets
 xMC = zeros(n,len,num); %Create same trial runs for each filter
 noisymeas = zeros(p,len-1,num);
@@ -183,15 +183,19 @@ HkLKF = zeros(p,n,len-1); %H(1) is H_1
 dukLKF = zeros(d,len-1); % No force deviation from nominal
 
 %Fill in the Jacobians
+I = eye(6);
 for i = 1:len-1
-    FkLKF(:,:,i) = (eye(6) + dt*A(xnom(:,i)));
+    FkLKF(:,:,i) = (I + dt*A(xnom(:,i)));
     GkLKF(:,:,i) = dt*B(time(i));
     HkLKF(:,:,i) = C(xnom(:,i+1)); %Recall indexing different
 end
 
-QLKF = 10000*Qtrue;
-RLKF = 100*Rtrue;
-P0_LKF = 100*P0; %Cheating?
+QLKF = Qtrue;
+%QLKF(3:6,:) = 10000*Qtrue(3:6,:);
+RLKF = Rtrue;
+% RLKF = Rtrue;
+% QLKF = Qtrue;
+P0_LKF = 1000*P0; 
 
 if runbool(1) && runbool(2)
 NEES_LKF = zeros(num,len);
@@ -199,13 +203,9 @@ NIS_LKF = zeros(num,len-1);
 
 for i=1:num
     % Create dy 
-    dyLKF =noisymeas(:,:,i)-ynom; %Difference between measurement and nomimal meas
-    dyLKF([1 3],:) = wrapToPi(noisymeas([1 3],:,i)-ynom([1 3],:));
-    
-    %Linearized KF
+    dyLKF = noisymeas(:,:,i)-ynom;
     [dxLKF,P,NIS_LKF(i,:),innovations] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
     xLKF = xnom + dxLKF;
-    
     % Compute NEES
     epsx = xMC(:,:,i)-xLKF;
     epsx([3 6],:) = wrapToPi(xMC([3 6],:,i)-xLKF([3 6],:));
@@ -268,7 +268,7 @@ end
 REKF = Rtrue;
 QEKF = Qtrue;
 QEKF(1:2,:) = .1*Qtrue(1:2,:);
-P0_EKF = P0;
+P0_EKF = P0*10;
 
 if runbool(1) && runbool(3)
 NEES_EKF = zeros(num,len);

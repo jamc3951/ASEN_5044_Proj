@@ -27,12 +27,14 @@ covaradd = Omegak*Q*Omegak';
 for i = 2:len;
     F = Fk(:,:,i-1);
     dxminus = F*dx(:,i-1) + Gk(:,:,i-1)*du(:,i-1);
+%    dxminus([3 6]) = wrapToPi(dxminus([3 6]));
     Pminus = F*P(:,:,i-1)*F' + covaradd;
        
     H = Hk(:,:,i-1);
     Sk = H*Pminus*H' + R;
     Sk = .5*(Sk+Sk'); %Make positive definite?
     yhat = H*dxminus;
+    yhat([1 3]) = wrapToPi(yhat([1 3]));
     K = Pminus*H'/Sk; % MATLAB will take inverse
     eyk = dy(:,i-1) - yhat;
     eyk([1 3]) = wrapToPi(dy([1 3],i-1)-yhat([1 3])); %no longer general
