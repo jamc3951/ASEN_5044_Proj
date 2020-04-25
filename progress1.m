@@ -122,10 +122,10 @@ end
 
 %% Monte Carlo - Generate some trials
 
-P0 = 0.1*diag([.5,.5,.1,2,2,.5].^2);
+P0 = 0.01*diag([.5,.5,.1,2,2,.5].^2);
 
 if runbool(1)
-num = 1;
+num = 6;
 %Generate some truth data sets
 xMC = zeros(n,len,num); %Create same trial runs for each filter
 noisymeas = zeros(p,len-1,num);
@@ -134,7 +134,7 @@ subt = dt/subnum;
 for i = 1:num
     % Generate x0 
     x0 = mvnrnd(inishcondish,P0)';
-    
+    %x0=inishcondish;
     % Generate some truth data 
     % Using ode45
 %     xMC = zeros(n,len);
@@ -159,15 +159,15 @@ for i = 1:num
             u = u+(k1+2*k2+2*k3+k4)/6;
             t = t+subt;
         end
-        %u = u+ mvnrnd(zeros(1,6),Omegak*Qtrue*Omegak')';
+        u = u+ mvnrnd(zeros(1,6),Omegak*Qtrue*Omegak')';
         xMC(:,j,i)= u;
     end
     xMC([3 6],:,i) = wrapToPi(xMC([3 6],:,i));    
     
     % Generate measurements 
     measMC = meas(xMC(:,2:end,i)); %Exact measurements for the states
-    %noisymeas(:,:,i) = measMC + mvnrnd([0;0;0;0;0],Rtrue,len-1)'; %added noise
-    noisymeas(:,:,i) = measMC; %No noise
+    noisymeas(:,:,i) = measMC + mvnrnd([0;0;0;0;0],Rtrue,len-1)'; %added noise
+    %noisymeas(:,:,i) = measMC; %No noise
 end
 
 
@@ -195,9 +195,25 @@ for i = 1:len-1
     HkLKF(:,:,i) = C(xnom(:,i+1)); %Recall indexing different
 end
 
-QLKF = 1*Qtrue;
-%QLKF(3:6,:) = Qtrue(3:6,:);
-RLKF = 1*Rtrue;
+QLKF=zeros(n);
+scale = [10 10 1 7 7 1];
+QLKF(1,1) = scale(1)*Qtrue(1,1);
+QLKF(2,2) = scale(2)*Qtrue(2,2);
+QLKF(3,3) = scale(3)*Qtrue(3,3);
+QLKF(4,4) = scale(4)*Qtrue(4,4);
+QLKF(5,5) = scale(5)*Qtrue(5,5);
+QLKF(6,6) = scale(6)*Qtrue(6,6);
+
+corr = [.1 .1 .2 .2];
+QLKF([1 2],[2 1]) = corr(1); % Correlation between UGV positions
+QLKF([4 5],[5 4]) = corr(2); % Correlation in UAV positions
+QLKF([1 4],[4 1]) = corr(3);% Correlation between UAV state and UGV states
+QLKF([1 5],[5 1]) = corr(3);%
+QLKF([2 4],[4 2]) = corr(4);%
+QLKF([2 5],[5 2]) = corr(4);%
+
+
+RLKF = Rtrue;
 P0_LKF = 1000*P0; 
 
 if runbool(1) && runbool(2)
@@ -214,7 +230,8 @@ for i=1:num
     epsx = xMC(:,:,i)-xLKF;
     epsx([3 6],:) = wrapToPi(xMC([3 6],:,i)-xLKF([3 6],:));
     for j = 1:len
-        NEES_LKF(i,j) = (epsx(:,j)')/P(:,:,j)*epsx(:,j);
+        Pk = .5*(P(:,:,j)+P(:,:,j)');
+        NEES_LKF(i,j) = (epsx(:,j)')/Pk*epsx(:,j);
     end
     % Compute NIS
     for j=1:len-1
