@@ -12,8 +12,8 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 0 0 1]; %Noiseless Prop, LKF Tuning, EKF Tuning, Implement
-runbool = [0 0 0 1]; %MC, LKF Tuning, EKF Tuning, Implement
+plotbool = [0 1 0 0]; %Noiseless Prop, LKF Tuning, EKF Tuning, Implement
+runbool = [1 1 0 0]; %MC, LKF Tuning, EKF Tuning, Implement
 rng(101);
 
 dt = 0.1;
@@ -125,7 +125,7 @@ end
 P0 = 0.1*diag([.5,.5,.1,2,2,.5].^2);
 
 if runbool(1)
-num = 10;
+num = 1;
 %Generate some truth data sets
 xMC = zeros(n,len,num); %Create same trial runs for each filter
 noisymeas = zeros(p,len-1,num);
@@ -159,15 +159,15 @@ for i = 1:num
             u = u+(k1+2*k2+2*k3+k4)/6;
             t = t+subt;
         end
-        u = u+ mvnrnd(zeros(1,6),Omegak*Qtrue*Omegak')';
+        %u = u+ mvnrnd(zeros(1,6),Omegak*Qtrue*Omegak')';
         xMC(:,j,i)= u;
     end
     xMC([3 6],:,i) = wrapToPi(xMC([3 6],:,i));    
     
     % Generate measurements 
     measMC = meas(xMC(:,2:end,i)); %Exact measurements for the states
-    noisymeas(:,:,i) = measMC + mvnrnd([0;0;0;0;0],Rtrue,len-1)'; %added noise
-    %noisymeas(:,:,i) = measMC; %No noise
+    %noisymeas(:,:,i) = measMC + mvnrnd([0;0;0;0;0],Rtrue,len-1)'; %added noise
+    noisymeas(:,:,i) = measMC; %No noise
 end
 
 
@@ -195,9 +195,9 @@ for i = 1:len-1
     HkLKF(:,:,i) = C(xnom(:,i+1)); %Recall indexing different
 end
 
-QLKF = 50*Qtrue;
+QLKF = 1*Qtrue;
 %QLKF(3:6,:) = Qtrue(3:6,:);
-RLKF = Rtrue;
+RLKF = 1*Rtrue;
 P0_LKF = 1000*P0; 
 
 if runbool(1) && runbool(2)
@@ -207,13 +207,14 @@ NIS_LKF = zeros(num,len-1);
 for i=1:num
     % Create dy 
     dyLKF = noisymeas(:,:,i)-ynom;
+    dyLKF([1 3],:) = wrapToPi(dyLKF([1 3],:));
     [dxLKF,P,innovations,Sk] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
     xLKF = xnom + dxLKF;
     % Compute NEES
     epsx = xMC(:,:,i)-xLKF;
     epsx([3 6],:) = wrapToPi(xMC([3 6],:,i)-xLKF([3 6],:));
     for j = 1:len
-        NEES_LKF(i,j) = epsx(:,j)'/P(:,:,j)*epsx(:,j);
+        NEES_LKF(i,j) = (epsx(:,j)')/P(:,:,j)*epsx(:,j);
     end
     % Compute NIS
     for j=1:len-1
