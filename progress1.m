@@ -12,8 +12,8 @@
 clear; close all; clc;
 
 % Make plots?
-plotbool = [0 1 0 0]; %Noiseless Prop, LKF Tuning, EKF Tuning, Implement
-runbool = [1 1 0 0]; %MC, LKF Tuning, EKF Tuning, Implement
+plotbool = [0 1 1 1]; %Noiseless Prop, LKF Tuning, EKF Tuning, Implement
+runbool = [1 1 1 1]; %MC, LKF Tuning, EKF Tuning, Implement
 rng(101);
 
 dt = 0.1;
@@ -37,7 +37,7 @@ eta_a_nom =@(t) -(300/pi)*sin(pi/25*t);
 theta_a_nom =@(t) wrapToPi(-pi/2 + pi/25*t);
 
 nom_cond =@(t) [xi_g_nom(t); eta_g_nom(t); theta_g_nom(t); xi_a_nom(t); eta_a_nom(t); theta_a_nom(t)];
-perturbation = [2;2;0.1;5;5;.1]; 
+perturbation = [0;1;0.1;1;2;.1]; 
 %perturbation = 10*[0;1;0; 0;0;0.1]; %Used to compare to TA solution
 inishcondish = nom_cond(0);
 perturbed_state = inishcondish + perturbation;
@@ -196,7 +196,7 @@ for i = 1:len-1
 end
 
 QLKF=zeros(n);
-scale = [10 10 1 7 7 1];
+scale = [1 1 1 7 7 1];
 QLKF(1,1) = scale(1)*Qtrue(1,1);
 QLKF(2,2) = scale(2)*Qtrue(2,2);
 QLKF(3,3) = scale(3)*Qtrue(3,3);
@@ -292,11 +292,13 @@ end
 %% Extended Kalman Filter
 REKF = Rtrue;
 QEKF = Qtrue;
-QEKF(1:2,:) = 0*Qtrue(1:2,:);
-QEKF(3,:) = 2*Qtrue(3,:);
-REKF(1:2:3,:) = .5*Rtrue(1:2:3,:);
-REKF(4:5,:) = 1.1*Rtrue(4:5,:);
-P0_EKF = P0*10;
+QEKF(1:2,:) = Qtrue(1:2,:);
+QEKF(3,:) = 1.5*Qtrue(3,:);
+QEKF(4:5,:) = 1.5*Qtrue(4:5,:);
+
+REKF(4:5,:) = .9*Rtrue(4:5,:);
+P0_EKF = P0*100;
+P0_EKF(1:2,:) = P0(1:2,:)*500;
 
 if runbool(1) && runbool(3)
 NEES_EKF = zeros(num,len);
@@ -374,6 +376,7 @@ if runbool(4)
     r4 = chi2inv(1-alpha/2,num*p)./num;
 
     dyLKF = ydata-ynom;
+    dyLKF([1 3],:) = wrapToPi(dyLKF([1 3],:));
     [dxLKF,P,innovations,Sk] = LKF(zeros(6,1),P0_LKF,time,FkLKF,GkLKF,dukLKF,OmegakLKF,QLKF,RLKF,HkLKF,dyLKF);
     xLKF = xnom + dxLKF;
     NIS_LKF = zeros(1,len-1);
@@ -437,6 +440,6 @@ if runbool(4)
         plotMeasurement(innovations,Sk,time(2:end),zeros(p,len-1),measLabels,'Error in Measurements, EKF',0);
         print('EKF_innov_implementation','-dpng')
     end
-
 end
+
 
