@@ -5,7 +5,7 @@
 % Dr. Matsuo
 % 5/1/2020
 % Created:  4/10/2020
-% Modified: 4/17/2020
+% Modified: 4/29/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Setup
@@ -366,7 +366,6 @@ end
 end
 
 %% Implement Filters on the Provided Data
-% Hopefully easy (LOL)
 if runbool(4)
     alpha = .05; %significance level
     num = 1;

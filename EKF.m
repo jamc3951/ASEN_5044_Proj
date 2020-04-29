@@ -10,7 +10,7 @@ function [x,P,innovation,Sk] = EKF(x0,P0,time,f,A,Omegak,Q,R,h,C,y)
 % Jamison McGinley, Jarrod Puseman
 % 5/1/2020
 % Created:  4/17/2020
-% Modified: 4/17/2020
+% Modified: 4/25/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 n = length(x0);
 len = length(time);

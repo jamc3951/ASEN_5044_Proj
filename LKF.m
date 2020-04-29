@@ -10,7 +10,7 @@ function [dx,P,innovation,Sk] = LKF(dx0,P0,time,Fk,Gk,du,Omegak,Q,R,Hk,dy)
 % Jamison McGinley, Jarrod Puseman
 % 5/1/2020
 % Created:  4/16/2020
-% Modified: 4/16/2020
+% Modified: 4/25/2020
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 n = length(dx0);
 len = length(time);
